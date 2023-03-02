@@ -1,5 +1,5 @@
 import { Command, Option } from "commander";
-import { sub } from "./messaging.mjs"
+import { sub, pub } from "./messaging.mjs"
 
 const program = new Command();
 const connectOptions = [
@@ -25,5 +25,18 @@ subCmd.requiredOption("-t --topic <topic>", "The MQTT topic the client will subs
     console.info(cliOpts)
     sub(cliOpts)
   });
+
+const pubCmd = program.command("pub")
+  .description("Subscribes a client to one or more topics.")
+connectOptions.forEach(opt => pubCmd.addOption(opt))
+pubCmd.requiredOption("-t --topic <topic>", "The MQTT topic the client will publish to")
+  .addOption(new Option("-q --qos <number>", "Define the quality of service level").choices(["0", "1", "2"]).default(0).argParser(parseInt))
+  .option("-m --message <string>", "The message which will be published on the topic", "")
+  .addOption(new Option("-e --message-expiry-interval <number>", "The lifetime of the publish message in seconds").default(0).argParser(parseInt))
+  .action((cliOpts) => {
+    console.info(cliOpts)
+    pub(cliOpts)
+  });
+
 
 program.parse();
