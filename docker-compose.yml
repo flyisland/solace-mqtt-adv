@@ -34,9 +34,11 @@ services:
   curl:
     image: curlimages/curl
     environment:
+      - solace_admin_url=http://solace:8080
       - solace_health_check_url=http://solace:5550/health-check/guaranteed-active
     volumes:
       - ./wait-for-solace-ready.sh:/wait-for-solace-ready.sh
-    command: sh -c 'sh /wait-for-solace-ready.sh'
+      - ./queue-template.sh:/queue-template.sh
+    command: sh -c 'sh /wait-for-solace-ready.sh && sh /queue-template.sh'
     depends_on:
       - solace
