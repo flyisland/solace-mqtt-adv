@@ -20,41 +20,50 @@ program
     } else {
       cliOpts["secondsSinceEpoch"] = NaN
     }
+    cliOpts["basicAuthorization"] = 'Basic ' + Buffer.from(cliOpts.adminUser + ":" + cliOpts.adminPassword).toString('base64')
     console.info(cliOpts)
     getDurableQueueNameFromClientId(cliOpts)
+      .then(queueName => replayOnQueue(cliOpts, queueName))
+      .catch(error => console.error(error))
   });
 
 program.parse()
 
-function replay(cliOpts) {
+async function replayOnQueue(cliOpts, queueName) {
+  let replayUrl = `${cliOpts.adminUrl}/SEMP/v2/action/msgVpns/default/queues/${percentEncoding(queueName)}/startReplay`
+  console.info(replayUrl)
 
+  const response = await fetch(replayUrl, {
+    method: "PUT",
+    headers: {
+      Authorization: cliOpts.basicAuthorization,
+    },
+  });
+  if (response.status !== 200) {
+    throw (`${response.status}: ${response.statusText} -> ${await response.text()}`);
+  }
+  console.info(`${response.status}: ${response.statusText} -> ${await response.text()}`)
 }
 
-function getDurableQueueNameFromClientId(cliOpts) {
+async function getDurableQueueNameFromClientId(cliOpts) {
   let mqttSessionsUrl = `${cliOpts.adminUrl}/SEMP/v2/monitor/msgVpns/default/mqttSessions`
   mqttSessionsUrl = mqttSessionsUrl + `?where=${percentEncoding("mqttSessionClientId==" + cliOpts.clientId)}`
   mqttSessionsUrl = mqttSessionsUrl + "&select=queueName"
-  console.info(mqttSessionsUrl)
+  //console.info(mqttSessionsUrl)
 
-  fetch(mqttSessionsUrl, {
+  const response = await fetch(mqttSessionsUrl, {
     headers: {
-      'Authorization': 'Basic ' + Buffer.from(cliOpts.adminUser + ":" + cliOpts.adminPassword).toString('base64')
+      Authorization: cliOpts.basicAuthorization
     },
-  })
-    .then(async response => {
-      if (response.status !== 200) {
-        throw (`${response.status}: ${response.statusText} -> ${await response.text()}`)
-      }
-      return response.json()
-    })
-    .then(json => {
-      if (!json["data"] || json["data"].length === 0) {
-        throw (new Error(`There is NO mqtt sessions of clientID: ${cliOpts.clientId}`))
-      }
-      return json["data"][0]["queueName"]
-    })
-    .then(queueName => console.info(queueName))
-    .catch(error => console.error(error))
+  });
+  if (response.status !== 200) {
+    throw (`${response.status}: ${response.statusText} -> ${await response.text()}`);
+  }
+  const json = await response.json();
+  if (!json["data"] || json["data"].length === 0) {
+    throw (new Error(`There is NO mqtt sessions of clientID: ${cliOpts.clientId}`));
+  }
+  return json["data"][0]["queueName"];
 }
 
 function percentEncoding(input) {
