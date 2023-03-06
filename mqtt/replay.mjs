@@ -7,8 +7,8 @@ program
   .option("-u --admin-url <url>", "URL to access the management endpoint of the broker", "http://localhost:8080")
   .option("-u --admin-user <user name>", "The username of the management user", "admin")
   .option("-p --admin-password <password>", "The password of the management user", "admin")
-  .requiredOption("-c --client-id <string>", "The Client Identifier identifies the Client to replay messages", "hkjc")
-  .option("-f --from-time <time>", "The time to begin replaying messages from, in ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ)")
+  .requiredOption("-c --client-id <string>", "The Client Identifier identifies the Client to replay messages")
+  .option("-f --from-time <time>", "The time to begin replaying messages from, in ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ). Do Not set this option if you want to play back all messages")
   .action((cliOpts) => {
     if (cliOpts.fromTime) {
       const fromTime = new Date(cliOpts.fromTime)
@@ -16,7 +16,7 @@ program
         console.error(`The fromTime ${cliOpts.fromTime} is invalid`)
         return;
       }
-      cliOpts["secondsSinceEpoch"] = Math.round(fromTime.getTime() / 100)
+      cliOpts["secondsSinceEpoch"] = Math.round(fromTime.getTime() / 1000)
     } else {
       cliOpts["secondsSinceEpoch"] = NaN
     }
@@ -32,24 +32,26 @@ program.parse()
 async function replayOnQueue(cliOpts, queueName) {
   let replayUrl = `${cliOpts.adminUrl}/SEMP/v2/action/msgVpns/default/queues/${percentEncoding(queueName)}/startReplay`
   console.info(replayUrl)
+  const replayBody = isNaN(cliOpts.secondsSinceEpoch) ? {} : { fromTime: cliOpts.secondsSinceEpoch }
 
   const response = await fetch(replayUrl, {
     method: "PUT",
     headers: {
       Authorization: cliOpts.basicAuthorization,
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify(replayBody),
   });
   if (response.status !== 200) {
     throw (`${response.status}: ${response.statusText} -> ${await response.text()}`);
   }
-  console.info(`${response.status}: ${response.statusText} -> ${await response.text()}`)
+  console.info(`Successfully replay messages on Client ID: ${cliOpts.clientId} -> ${await response.text()}`)
 }
 
 async function getDurableQueueNameFromClientId(cliOpts) {
   let mqttSessionsUrl = `${cliOpts.adminUrl}/SEMP/v2/monitor/msgVpns/default/mqttSessions`
   mqttSessionsUrl = mqttSessionsUrl + `?where=${percentEncoding("mqttSessionClientId==" + cliOpts.clientId)}`
   mqttSessionsUrl = mqttSessionsUrl + "&select=queueName"
-  //console.info(mqttSessionsUrl)
 
   const response = await fetch(mqttSessionsUrl, {
     headers: {
