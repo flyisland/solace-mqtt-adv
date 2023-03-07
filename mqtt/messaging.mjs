@@ -17,6 +17,10 @@ export async function sub(cliOpts) {
     .then(asyncClient => {
       console.info(`Connected to ${cliOpts.brokerUrl} as ${clientOptions.clientId} successfully`)
       asyncClient.on("message", onMessage)
+      asyncClient.on("connect", () => console.info("on connect"))
+      asyncClient.on("disconnect", () => console.info("on disconnect"))
+      asyncClient.on("error", (err) => console.error(err))
+      asyncClient.on("close", () => console.info("on close"))
       asyncClient.subscribe(cliOpts.topic, { qos: cliOpts.qos })
         .then(console.info(`Subscribed on topic ${cliOpts.topic} with qos ${cliOpts.qos} successfully`))
     })
