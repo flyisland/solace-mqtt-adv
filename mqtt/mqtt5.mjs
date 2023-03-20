@@ -31,6 +31,7 @@ const pubCmd = program.command("pub")
 connectOptions.forEach(opt => pubCmd.addOption(opt))
 pubCmd.requiredOption("-t --topic <topic>", "The MQTT topic the client will publish to")
   .addOption(new Option("-q --qos <number>", "Define the quality of service level").choices(["0", "1", "2"]).default(0).argParser(parseInt))
+  .option("-r --retain", "Retain the message")
   .option("-m --message <string>", "The message which will be published on the topic", "")
   .addOption(new Option("-e --message-expiry-interval <number>", "The lifetime of the publish message in seconds").default(0).argParser(parseInt))
   .action((cliOpts) => {

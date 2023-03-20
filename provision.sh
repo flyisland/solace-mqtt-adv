@@ -14,8 +14,11 @@ provision(){
   if [ "$response" == "200" ] ; then
     log "$goal successfully"
   else
-    log "${configUrl} -> ${response}"
+    log "${action} ${configUrl}"
+    # curl again to get the error message
+    echo "$jsonBody" | curl -X $action -u $USER $configUrl -H 'content-type: application/json' -d @-
   fi
+  sleep 1
 }
 
 
@@ -37,3 +40,14 @@ provision "Enable Replay" \
   "/msgVpns/default/replayLogs" \
   "POST" \
   '{"egressEnabled":true,"ingressEnabled":true,"maxSpoolUsage":1000,"replayLogName":"defaultLog"}'
+
+## Enable Retain Message
+provision "Set the maximum total memory usage of all MQTT Retain Caches" \
+  "/msgVpns/default" \
+  "PATCH" \
+  '{"mqttRetainMaxMemory": 1000}'
+
+provision "Create MQTT Retain Cache" \
+  "/msgVpns/default/mqttRetainCaches" \
+  "POST" \
+  '{"cacheName":"defaultCache","enabled":true}'

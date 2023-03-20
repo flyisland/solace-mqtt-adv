@@ -36,6 +36,7 @@ export async function pub(cliOpts) {
   const clientOptions = cliOpts2clientOpts(cliOpts)
   const publishOptions = {
     qos: cliOpts.qos,
+    retain: cliOpts.retain ? true : false,
     properties: {
       messageExpiryInterval: cliOpts.messageExpiryInterval,
     },
