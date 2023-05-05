@@ -4,6 +4,8 @@ function cliOpts2clientOpts(cliOpts) {
   return {
     protocolVersion: 5,
     clientId: cliOpts.clientId ? cliOpts.clientId : (Math.random() + 1).toString(36).substring(7),
+    username: cliOpts.username,
+    password: cliOpts.password,
     clean: cliOpts.cleanStart,
     properties: {
       sessionExpiryInterval: cliOpts.sessionExpiryInterval,

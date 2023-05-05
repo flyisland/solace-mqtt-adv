@@ -5,6 +5,8 @@ const program = new Command();
 const connectOptions = [
   new Option("-b --broker-url <url>", "The MQTT host").default("tcp://localhost:1883"),
   new Option("-c --client-id <string>", "The Client Identifier identifies the Client to the Server"),
+  new Option("-u --username <string>", "The username required by your broker, if any"),
+  new Option("-p --password <string>", "The password required by your broker, if any"),
   new Option("--no-clean-start", "whether the Connection starts a new Session or is a continuation of an existing Session"),
   new Option("--session-expiry-interval <number>", "Session Expiry Interval in seconds, If the Session Expiry Interval is absent the value 0 is used. If it is set to 0, or is absent, the Session ends when the Network Connection is closed.")
     .default(0)
